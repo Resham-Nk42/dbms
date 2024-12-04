@@ -1,0 +1,162 @@
+CREATE DATABASE if not exists Employee1;
+USE Employee;
+
+CREATE TABLE dep1(
+    depno INT PRIMARY KEY,      
+    dloc VARCHAR(255),          
+    depname VARCHAR(255)        
+);
+
+
+
+CREATE TABLE Employee122(
+    empno INT PRIMARY KEY,      
+    ename VARCHAR(255),          
+    mgrno INT,                  
+    hiredate DATE,              
+    sal DECIMAL(10, 2),          
+    depno INT,                  
+    FOREIGN KEY (depno) REFERENCES dep1(depno)
+);
+
+drop table employee1;
+
+
+CREATE TABLE project1 (
+    prono INT PRIMARY KEY,        
+    pname VARCHAR(255),          
+    ploc VARCHAR(255)          
+);
+drop table project1;
+
+CREATE TABLE assignedto1 (
+    empno INT,                    
+    prono INT,                  
+    jobrole VARCHAR(255),    
+    PRIMARY KEY (empno, prono),  
+    FOREIGN KEY (empno) REFERENCES employee122(empno) ON DELETE CASCADE,
+    FOREIGN KEY (prono) REFERENCES project1(prono) ON DELETE CASCADE  
+);
+drop table assignedto1;
+
+CREATE TABLE Incentives24(
+    empno INT,                  
+    incentivedate DATE,          
+    incentiveamount DECIMAL(10, 2),
+    PRIMARY KEY (incentivedate),
+    FOREIGN KEY (empno) REFERENCES employee122(empno) ON DELETE CASCADE
+);
+
+drop table Incentives24;
+
+
+INSERT INTO dep1(depno, dloc, depname) VALUES
+(1, 'Hyderabad', 'Human Resources'),
+(2, 'Mysuru', 'Sales'),
+(3, 'Delhi', 'Marketing'),
+(4, 'Mumbai', 'Engineering');
+
+INSERT INTO employee122(empno, ename, mgrno, hiredate, sal, depno) VALUES
+(101, 'resham', NULL, '2015-01-10', 60000.00, 1),
+(102, 'divya', 101, '2016-03-15', 55000.00, 1),
+(103, 'khushi', NULL, '2014-07-22', 70000.00, 2),
+(104, 'asha', 103, '2017-05-30', 65000.00, 2),
+(105, 'tina', NULL, '2018-11-01', 80000.00, 3),
+(106, 'srushra', 105, '2019-06-12', 75000.00, 3),
+(107, 'Sweta', NULL, '2020-02-10', 85000.00, 4),
+(108, 'Jack', 107, '2021-08-15', 90000.00, 4);
+
+
+
+USE Employee;
+INSERT INTO project1(prono, pname, ploc) VALUES
+(201, 'Wtercycle','mysore'),
+(202,'ecommerce','hyderabad'),
+(203,'Stackinventory','banglore'),
+(204,'bank','banglore'),
+(205,'portpolio','mysore');
+
+USE Employee;
+INSERT INTO assignedto1(empno, prono, jobrole) VALUES
+(101, 201, 'Project Manager'),
+(102, 202, 'Team Lead'),
+(103, 203, 'Senior Developer'),
+(104, 204, 'Developer'),
+(105, 201, 'Project Manager'),
+(106, 202, 'Engineer'),
+(107, 203, 'Designer'),
+(108, 204, 'Tester');
+
+USE Employee;
+INSERT INTO Incentives24(empno, incentivedate, incentiveamount) VALUES
+(101, '2019-01-15', 1500.00),
+(102, '2018-02-20', 1200.00),
+(103, '2019-03-10', 1800.00),
+(104, '2019-01-25', 1100.00),
+(106, '2020-05-15', 0),
+(107, '2023-06-30', 1400.00);
+
+SELECT DISTINCT a.empno
+FROM assignedto1 a
+JOIN project1 p ON a.prono = p.prono
+WHERE p.ploc IN ('Hyderabad', 'Mysuru');
+
+select e.empno,e.ename,d.depname name,a.jobrole,d.dloc,p.ploc
+from employee122
+as e,dep1 as d,project1 as p,assignedto1  as a where e.depno=d.depno and e.empno=a.empno and a.prono =p.prono and d.dloc=p.ploc;
+
+use Employee;
+
+
+select empno
+from Incentives2
+where incentiveamount=0;
+
+SELECT e.ename AS employee_name,
+       e.empno AS employee_number,
+       d.depname AS department,
+       a.jobrole AS job_role,
+       d.dloc AS department_location,
+       p.ploc AS project_location
+FROM employee122 e
+JOIN dep1 d ON e.depno = d.depno
+JOIN assignedto1 a ON e.empno = a.empno
+JOIN project1 
+WHERE d.dloc = p.ploc;
+
+
+SELECT e.ename AS manager_name, COUNT(emp.empno) AS num_employees
+FROM employee122 e
+JOIN employee122 emp ON e.empno = emp.mgrno
+GROUP BY e.empno
+ORDER BY num_employees DESC
+LIMIT 1;
+
+SELECT m.ename AS manager_name
+FROM employee122 m
+JOIN employee122 e ON m.empno = e.mgrno
+GROUP BY m.empno, m.ename, m.sal
+HAVING m.sal > AVG(e.sal);
+
+SELECT e.depno, e.ename AS second_level_manager
+FROM employee122 e
+JOIN employee122 m ON e.mgrno = m.empno
+WHERE m.mgrno IS NULL  -- Top-level managers
+AND e.mgrno IS NOT NULL -- Second-level managers
+ORDER BY e.depno;
+
+WITH IncentiveRank AS (
+    SELECT empno, incentivedate, incentiveamount,
+           ROW_NUMBER() OVER (ORDER BY incentiveamount DESC) AS incentive_rank
+    FROM Incentives24
+    WHERE incentivedate BETWEEN '2019-01-01' AND '2019-01-31'
+)
+SELECT e.empno, e.ename, e.hiredate, e.sal, e.depno, i.incentivedate, i.incentiveamount
+FROM IncentiveRank i
+JOIN employee122 e ON i.empno = e.empno
+WHERE i.incentive_rank = 2;
+
+SELECT e.empno, e.ename, e.depno,  m.empno AS manager_empno, m.ename AS manager_name
+FROM employee122 e
+JOIN employee122 m ON e.mgrno = m.empno
+WHERE e.depno = m.depno;
