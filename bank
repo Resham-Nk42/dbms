@@ -1,0 +1,188 @@
+use riya;
+create table branch(branch_name varchar(20),branch_city varchar(20),assets real,primary key(branch_name));
+desc branch;
+
+create table bankaccount(accno int,branch_name varchar(20),balance real,primary key(accno),foreign key (branch_name)references branch(branch_name));
+desc bankaccount;
+
+create table bankcustomer(customername varchar(20),customerstreet varchar(20),customercity varchar(20),primary key(customername));
+desc bankcustomer;
+
+create table depositer(customername varchar(20),accno integer,
+primary key(customername,accno),
+foreign key(customername) references bankcustomer(customername),
+foreign key(accno) references bankaccount(accno)
+);
+
+desc depositer;
+
+create table loan(loan_no integer,branch_name varchar(20),amount real,
+primary key(loan_no),
+foreign key(branch_name) references branch(branch_name));
+
+desc loan;
+
+insert into branch values('canara','bengaluru',50000);
+insert into branch values('sbi','udupi',90000);
+insert into branch values('AXIS','delhi',40000);
+insert into branch values('ICICI','delhi',60000);
+insert into branch values('BARODA','bengaluru',70000);
+
+insert into bankaccount values(1,'canara',2000);
+insert into bankaccount values(2,'sbi',5000);
+insert into bankaccount values(3,'canara',8000);
+insert into bankaccount values(4,'AXIS',3000);
+insert into bankaccount values(5,'ICICI',1000);
+
+insert into bankaccount values(6,'AXIS',4000);
+insert into bankaccount values(7,'ICICI',3000);
+insert into bankaccount values(8,'canara',2000);
+insert into bankaccount values(9,'BARODA',4000);
+insert into bankaccount values(10,'sbi',6000);
+insert into bankaccount values(11,'ICICI',2000);
+
+select * from bankaccount;
+
+insert into bankcustomer values('naveen','bull road','basavanagudi');
+insert into bankcustomer values('niyaan','ring road','yelhanka');
+insert into bankcustomer values('jian','silk road','KR puram');
+insert into bankcustomer values('zoro','bull road','basavanagudi');
+insert into bankcustomer values('lia','second road','jaynagar');
+insert into bankcustomer values('nalina','bull road','basavanagudi');
+insert into bankcustomer values('nayak','bullet road','ramnagar');
+insert into bankcustomer values('vidya','first road','basavanagudi');
+insert into bankcustomer values('veena','shivaji road','banashankari');
+insert into bankcustomer values('navya','ring road','yelhanka');
+
+select * from bankcustomer;
+
+insert into depositer values('naveen',1);
+insert into depositer values('niyaan',2);
+insert into depositer values('jian',3);
+insert into depositer values('zoro',4);
+insert into depositer values('zoro',5);
+insert into depositer values('zoro',6);
+insert into depositer values('zoro',7);
+insert into depositer values('vidya',8);
+insert into depositer values('vidya',9);
+
+select * from depositer;
+
+insert into  loan values(11,'canara',1000);
+insert into  loan values(22,'sbi',2000);
+insert into  loan values(33,'BARODA',3000);
+insert into  loan values(44,'ICICI',4000);
+insert into  loan values(55,'AXIS',5000);
+
+
+use riya;
+alter table branch
+rename column assets to assests_in_lakhs;
+
+SELECT branch_name,  assests_in_lakhs / 100000 AS  assests
+FROM branch;
+
+SELECT d.customername, ba.branch_name, COUNT(ba.accno) AS account_count
+FROM depositer d
+JOIN bankaccount ba ON d.accno = ba.accno
+GROUP BY d.customername, ba.branch_name
+HAVING COUNT(ba.accno) >= 2;
+
+SELECT d.customername
+FROM depositer d
+JOIN bankaccount ba ON d.accno = ba.accno
+JOIN branch b ON ba.branch_name = b.branch_name
+WHERE b.branch_city = 'delhi'
+GROUP BY d.customername
+HAVING COUNT(DISTINCT b.branch_name) = 
+    (SELECT COUNT(DISTINCT branch_name)
+     FROM branch
+     WHERE branch_city = 'delhi');
+
+DELETE FROM depositer
+WHERE accno IN (
+    SELECT accno 
+    FROM bankaccount 
+    WHERE branch_name IN (
+        SELECT branch_name 
+        FROM branch 
+        WHERE branch_city = 'udupi'
+    )
+);
+
+
+DELETE FROM bankaccount
+WHERE branch_name IN 
+    (SELECT branch_name 
+     FROM branch
+     WHERE branch_city = 'udupi');
+     
+     select * from bankaccount;
+     select * from branch;
+
+SELECT * FROM loan ORDER BY amount DESC;
+
+(SELECT customername FROM DEPOSITER ) UNION (SELECT customername FROM
+bankcustomer);
+
+CREATE VIEW BRANCH_TOTAL_LOAN (BRANCH_NAME, TOTAL_LOAN) AS SELECT
+BRANCH_NAME, SUM(AMOUNT) FROM LOAN GROUP BY BRANCH_NAME;
+
+select* from BRANCH_TOTAL_LOAN;
+
+UPDATE bankaccount SET balance=balance *1.05 WHERE accno = 4;
+select * from bankaccount;
+
+
+UPDATE BANKACCOUNT SET BALANCE=BALANCE *1.05;
+
+
+
+select distinct s.customername
+
+from depositer as d
+
+where not exists ( (select branch_name
+
+from branch
+
+where branch_city = ‘delhi’) except
+
+(select R.branch_name
+
+from depositer as T, account as R
+
+where T.accno = R.accno
+
+and S.customername = T.customername ))
+
+
+select distinct customername
+
+from bankcustomer where customername not in
+
+(select customername from depositer )
+
+select branch_name from branch where assets >
+all (select assests_in_lakhs from branch where branch_city
+= ‘bengaluru’)
+
+use riya;
+select distinct customername
+
+from bankcustomer, loan
+
+where bankcustomer.loan_no =
+loan.loan_no
+
+and branch_city = ‘bengaluru’
+
+and (branch_city, customername ) in
+
+(select branch_city, customername
+
+from depositer, bankaccount
+
+where depositer.accono =
+bankaccount.accno )
+
