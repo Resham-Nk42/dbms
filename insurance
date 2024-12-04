@@ -1,0 +1,92 @@
+show databases;
+use newdatabase;
+create table person(driver_id varchar(10), name varchar(20), address varchar(30),primary key(driver_id));
+desc person;
+create table car3(reg_num varchar(10),model varchar(10),year int,primary key(reg_num));
+desc car3;
+create table accident(report_num int, accident_date date,location varchar(20),primary key(report_num));
+desc accident;
+create table own(driver_id varchar(10),reg_num varchar(10),primary key(driver_id,reg_num),foreign key(driver_id) references person(driver_id),foreign key(reg_num) references car3(reg_num));
+create table participate1(driver_id varchar(10),reg_num varchar(10),report_num int,damage_amount int,
+primary key(driver_id,reg_num,report_num),
+foreign key(driver_id)references person(driver_id),
+foreign key(reg_num)references car3(reg_num),
+foreign key(report_num)references accident(report_num));
+desc participated;
+
+insert into person values("A01","Richard","Srinivas nagar");
+insert into person values("A02","Pradeep","Rajaji nagar");
+insert into person values("A03","Smith","Ashok nagar");
+insert into person values("A04","Venu","N R Colony");
+insert into person values("A05","Jhon","Hanumanth nagar");
+
+select * from person;
+
+insert into car3 values('KA052250','toyota',2006);
+insert into car3 values('KA031181','suzuki',2009);
+insert into car3 values('KA095477','tata',2008);
+insert into car3 values('KA053408','supra',2000);
+insert into car3 values('KA041702','bugatti',1999);
+
+select * from car2;
+
+insert into accident values(111,'2003-01-01','mysore road');
+insert into accident values(222,'2003-09-09','mysore road');
+insert into accident values(333,'2003-06-21','mysore road');
+insert into accident values(444,'2003-02-11','bull temple road');
+insert into accident values(555,'2003-03-18','kanakapura road');
+
+select * from accident;
+
+insert into own values('A01','KA052250');
+insert into own values('A02','KA053408');
+insert into own values('A03','KA031181');
+insert into own values('A04','KA095477');
+insert into own values('A05','KA041702');
+truncate table owns;
+select * from owns;
+drop table owns;
+desc car2;
+select * from own;
+
+insert into participate1 values('A01','KA052250',111,10000);
+insert into participate1 values('A02','KA053408',222,50000);
+insert into participate1 values('A03','KA095477',333,25000);
+insert into participate1 values('A04','KA031181',444,3000);
+insert into participate1 values('A05','KA041702',555,5000);
+select * from participate1;
+use newdatabase;
+update participate1 set damage_amount=35000
+
+where reg_num='KA053408' and report_num=222;
+select * from participate1;
+
+
+use newdatabase;
+select count(distinct driver_id) CNT
+
+from participate1 a, accident b
+
+where a.report_num=b.report_num and b.accident_date like '%08';
+
+insert into accident values(16,'2008-03-08','domlur');
+select * from accident;
+
+use newdatabase;
+select * from participate1 order by damage_amount desc;
+use newdatabase;
+select avg(damage_amount)from participate1;
+
+use newdatabase;
+select name from person a, participate b where a.driver_id=b.driver_id and damage_amount>(select avg(damage_amount)from participated);
+
+use newdatabase;
+SELECT MAX(damage_amount) FROM participate1;
+
+use newdatabase;
+DELETE FROM participate1 WHERE
+
+damage_amount < (SELECT AVG (damage_amount) FROM participate1);
+
+
+
